@@ -1,4 +1,4 @@
-package com.example.cdl1;
+package com.example.cdl1.FichierCDL;
 
 
 import com.example.cdl1.FichierCDL.FichierECH;
@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @Component
-
+// Mapper l'object FichierECH
 public class FichierECHResultRowMapper implements RowMapper<FichierECH> {
     @Override
     public FichierECH mapRow(ResultSet rs, int i) throws SQLException {

@@ -2,8 +2,9 @@ package com.example.cdl1.Configuration;
 
 
 import com.example.cdl1.FichierCDL.FichierECH;
-import com.example.cdl1.FichierECHFieldSetMapper;
-import com.example.cdl1.FichierECHResultRowMapper;
+import com.example.cdl1.FichierCDL.FichierECHFieldSetMapper;
+import com.example.cdl1.FichierCDL.FichierECHResultRowMapper;
+import com.example.cdl1.TableBD.TYPE_DOSSIER;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -20,19 +21,12 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.SqlRowSetResultSetExtractor;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 @Configuration
 @EnableBatchProcessing
@@ -50,7 +44,7 @@ public class TaskletsConfig {
     @Bean
     public Job job() {
         return jobBuilders
-                //.get("taskletsJob")
+                //.get
                 .incrementer(new RunIdIncrementer())
                 .start(Step1())
                 .build();
@@ -149,47 +143,32 @@ public class TaskletsConfig {
          *setRowMapper ?*/
     @Bean
     public JdbcCursorItemReader<FichierECH> FichierECH() throws SQLException {
+
         JdbcCursorItemReader<FichierECH> fichierech = new JdbcCursorItemReader<>();
         fichierech.setDataSource(dataSource);
+        fichierech.setSql("select NATENG from FichierECH");
         fichierech.setRowMapper(new FichierECHResultRowMapper());
+
         JdbcCursorItemReader<FichierECH> fichierech2 = new JdbcCursorItemReader<>();
         fichierech2.setDataSource(dataSource);
+        fichierech2.setSql("select TYPE from FichierECH");
         fichierech2.setRowMapper(new FichierECHResultRowMapper());
 
-        //...traitement...
-        //,TYPE, name
-        fichierech.setSql("select NATENG from FichierECH");
-        fichierech2.setSql("select TYPE from FichierECH");
-
-        //SqlRowSetResultSetExtractor()
-        //  try {
-        Connection con = DriverManager.getConnection("jdbc:oracle:CDL@//localhost:1521/xe");
-        System.out.println("Connection created");
-        Statement stmt = con.createStatement();
-        String Result = String.valueOf(stmt.execute("select LIBELLE_COURT from CDL.TYPE_DOSSIER"));
-       con.close();
-        System.out.println("Connection closed");
-       /*  }
-        catch (Exception e) {
-            System.out.println(e.toString());
-        }
-       */
+        JdbcCursorItemReader<TYPE_DOSSIER> TYPE_DOSSIER = new JdbcCursorItemReader<>();
+        TYPE_DOSSIER.setDataSource(dataSource);
+        TYPE_DOSSIER.setSql("select LIBELLE_COURT from TYPE_DOSSIER");
 
 
 
         //flatFileItemReader
         //while(fichierech.setMaxRows(5)>int i)
         if(fichierech.toString()=="ECH")
-            if(fichierech2.toString()==Result){
+            if(fichierech2.toString()==TYPE_DOSSIER.toString()){
                 System.out.println("*envoye vers table IMPAYES_CDL*");
-                // insert row(fichierech) in fichierimpeye / stmt->fetch()
-                // insert into IMPAYES_CDL(NATENG,TYPE) values(fichierech.toString(),fichierech2.toString())
-                Connection con1 = DriverManager.getConnection("jdbc:oracle:CDL@//localhost:1521/xe");
-                System.out.println("Connection created");
-                Statement stmt1 = con1.createStatement();
-                stmt1 = con1.prepareCall("insert into IMPAYES_CDL(NATENG,TYPE) values(fichierech.toString(),fichierech2.toString() )");
-                con1.close();
-                System.out.println("Connection closed");
+                // insert row(fichierech) in IMPAYES_CDL /
+
+                //stmt1 = con1.prepareCall("insert into IMPAYES_CDL(NATENG,TYPE) values(fichierech.toString(),fichierech2.toString() )");
+
                 // String Result1 = String.valueOf(stmt1.executeQuery("insert into IMPAYES_CDL(NATENG,TYPE) values(fichierech.toString(),fichierech2.toString())"));
             }
             else {

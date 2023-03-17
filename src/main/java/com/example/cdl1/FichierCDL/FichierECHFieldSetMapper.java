@@ -1,4 +1,4 @@
-package com.example.cdl1;
+package com.example.cdl1.FichierCDL;
 
 import com.example.cdl1.FichierCDL.FichierECH;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
