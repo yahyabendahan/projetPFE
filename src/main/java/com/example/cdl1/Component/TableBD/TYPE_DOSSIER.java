@@ -1,4 +1,4 @@
-package com.example.cdl1.TableBD;
+package com.example.cdl1.Component.TableBD;
 
 
 import lombok.AllArgsConstructor;

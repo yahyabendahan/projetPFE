@@ -1,10 +1,12 @@
 package com.example.cdl1.Configuration;
 
 
-import com.example.cdl1.FichierCDL.FichierECH;
-import com.example.cdl1.FichierCDL.FichierECHFieldSetMapper;
-import com.example.cdl1.FichierCDL.FichierECHResultRowMapper;
-import com.example.cdl1.TableBD.TYPE_DOSSIER;
+import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECH;
+import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHFieldSetMapper;
+import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemProcessor;
+import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHFieldSetMapper;
+import com.example.cdl1.Component.TableBD.TYPE_DOSSIER;
+import com.example.cdl1.Component.TableBD.TYPE_DOSSIERResultRowMapper;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -15,38 +17,48 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-@Configuration
+//@Configuration
 @EnableBatchProcessing
-public class TaskletsConfig {
+public class BatchConfig {
 
-    //@Autowired
+    @Autowired
     private JobBuilder jobBuilders;
 
-    //@Autowired
+    @Autowired
     private StepBuilder stepBuilders;
 
-    //@Autowired
+    @Autowired
     private DataSource dataSource;
+
 
     @Bean
     public Job job() {
+        Step Step1=stepBuilders
+                //  .get("fichierECH")
+                .tasklet(new linesReader())
+                .tasklet(new linesProcessor())
+                .tasklet(new linesWriter())
+                .allowStartIfComplete(true)
+                .build();
+        //step step2
+        //...
+
         return jobBuilders
-                //.get
+                //traitement des fichiers entrees
                 .incrementer(new RunIdIncrementer())
-                .start(Step1())
+                .start(Step1)
                 .build();
     }
 
@@ -62,15 +74,7 @@ public class TaskletsConfig {
         .build();
   }
   */
-    @Bean
-    protected Step Step1() {
-        return stepBuilders
-              //  .get("readLines")
-                .tasklet(new linesReader())
-                .tasklet(new linesProcessor())
-                .tasklet(new linesWriter())
-                .build();
-    }
+
 
 /*
     @Bean
@@ -91,14 +95,6 @@ public class TaskletsConfig {
 */
 
 
-    // ...
-
-
-
-  //  @ResponseBody
-
-
-
     //LinesReader will be in charge of reading data from the input file:
     public class linesReader implements Tasklet {
         @Override
@@ -115,21 +111,32 @@ public class TaskletsConfig {
           lineTokenizer.setDelimiter("|");
           lineTokenizer.setStrict(false);
 
-          lineTokenizer.setNames("l","NATENG","TYPE");
+          lineTokenizer.setNames("Age","NATENG","TYPE");
+          lineTokenizer.setIncludedFields(new int[] { 0, 1, 2 });
           lineMapper.setLineTokenizer(lineTokenizer);
           lineMapper.setFieldSetMapper(new FichierECHFieldSetMapper());
           itemReader.setLineMapper(lineMapper);
-          itemReader.open(new ExecutionContext());
-          FichierECH FichierECH = itemReader.read();
+      //    itemReader.open(new ExecutionContext());
+       //   FichierECH FichierECH = itemReader.read();
 
           return itemReader;
       }
+        @Bean
+        public JdbcCursorItemReader<TYPE_DOSSIER> TYPE_DOSSIER() throws SQLException {
+
+            JdbcCursorItemReader<TYPE_DOSSIER> TYPE_DOSSIER = new JdbcCursorItemReader<>();
+            TYPE_DOSSIER.setDataSource(dataSource);
+            TYPE_DOSSIER.setSql("select LIBELLE_COURT from TYPE_DOSSIER");
+            TYPE_DOSSIER.setRowMapper(new TYPE_DOSSIERResultRowMapper());
+
+            return TYPE_DOSSIER;
+        }
 
     }
 
 
 
-    //LinesProcessor will calculate the age for every person in the file:
+    //LinesProcessor will ...in the file:
     public class linesProcessor implements Tasklet {
         @Override
         public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
@@ -137,57 +144,17 @@ public class TaskletsConfig {
         }
         // ...
 
-//JdbcCursorItemReader ?
-        /* setDataSource ?
-         *setSql ?
-         *setRowMapper ?*/
-    @Bean
-    public JdbcCursorItemReader<FichierECH> FichierECH() throws SQLException {
-
-        JdbcCursorItemReader<FichierECH> fichierech = new JdbcCursorItemReader<>();
-        fichierech.setDataSource(dataSource);
-        fichierech.setSql("select NATENG from FichierECH");
-        fichierech.setRowMapper(new FichierECHResultRowMapper());
-
-        JdbcCursorItemReader<FichierECH> fichierech2 = new JdbcCursorItemReader<>();
-        fichierech2.setDataSource(dataSource);
-        fichierech2.setSql("select TYPE from FichierECH");
-        fichierech2.setRowMapper(new FichierECHResultRowMapper());
-
-        JdbcCursorItemReader<TYPE_DOSSIER> TYPE_DOSSIER = new JdbcCursorItemReader<>();
-        TYPE_DOSSIER.setDataSource(dataSource);
-        TYPE_DOSSIER.setSql("select LIBELLE_COURT from TYPE_DOSSIER");
-
-
-
-        //flatFileItemReader
-        //while(fichierech.setMaxRows(5)>int i)
-        if(fichierech.toString()=="ECH")
-            if(fichierech2.toString()==TYPE_DOSSIER.toString()){
-                System.out.println("*envoye vers table IMPAYES_CDL*");
-                // insert row(fichierech) in IMPAYES_CDL /
-
-                //stmt1 = con1.prepareCall("insert into IMPAYES_CDL(NATENG,TYPE) values(fichierech.toString(),fichierech2.toString() )");
-
-                // String Result1 = String.valueOf(stmt1.executeQuery("insert into IMPAYES_CDL(NATENG,TYPE) values(fichierech.toString(),fichierech2.toString())"));
-            }
-            else {
-                System.out.println("*envoyée la ligne vers fichier 'rejetech.txt'*");
-                // insert row(fichierech) in rejetech.txt
-            }
-
-
-
-        //end while
-        return null;
-    }
+        @Bean
+        public FichierECHItemProcessor processor() {
+            return new FichierECHItemProcessor();
+        }
 
     }
 
 
 
 
-    //Finally, LinesWriter will have the responsibility of writing names and ages to an output file:
+    //Finally, LinesWriter will have the responsibility of writing ... to an output file:
     public class linesWriter implements Tasklet {
         @Override
         public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
@@ -195,6 +162,8 @@ public class TaskletsConfig {
         }
         // ...
         /*
+
+=>to BD
          @Bean
   public JdbcBatchItemWriter<FichierECH> writer() {
     JdbcBatchItemWriter<FichierECH> itemWriter = new JdbcBatchItemWriter<FichierECH>();
@@ -202,7 +171,25 @@ public class TaskletsConfig {
     itemWriter.setSql("INSERT INTO EMPLOYEE (ID, FIRSTNAME, LASTNAME) VALUES (:id, :firstName, :lastName)");
     itemWriter.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<FichierECH>());
     return itemWriter;
-  }
+  }        writer.setResource(new FileSystemResource("C://data/batch/data.csv"));
+=>to file
+    @Bean
+    public FlatFileItemWriter<Student> writer() {
+        FlatFileItemWriter<Student> writer = new FlatFileItemWriter<>();
+        writer.setResource(new FileSystemResource("C://data/batch/data.csv"));  reject.txt
+        writer.setLineAggregator(getDelimitedLineAggregator());
+        return writer;
+    }
+     private DelimitedLineAggregator<Student> getDelimitedLineAggregator() {
+        BeanWrapperFieldExtractor<Student> beanWrapperFieldExtractor = new BeanWrapperFieldExtractor<Student>();
+        beanWrapperFieldExtractor.setNames(new String[]{"id", "rollNumber", "name"});
+
+        DelimitedLineAggregator<Student> aggregator = new DelimitedLineAggregator<Student>();
+        aggregator.setDelimiter(",");
+        aggregator.setFieldExtractor(beanWrapperFieldExtractor);
+        return aggregator;
+
+    }
          */
     }
 
