@@ -7,6 +7,7 @@ import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemProcessor
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHFieldSetMapper;
 import com.example.cdl1.Component.TableBD.TYPE_DOSSIER;
 import com.example.cdl1.Component.TableBD.TYPE_DOSSIERResultRowMapper;
+import lombok.SneakyThrows;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -17,16 +18,25 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
+import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.WritableResource;
 
 import javax.sql.DataSource;
+import java.io.File;
 import java.sql.SQLException;
 
 //@Configuration
@@ -150,47 +160,57 @@ public class BatchConfig {
         }
 
     }
+/*
+    @Value("C:\\Users\\acer\\Desktop\\pfe\\fichier donnees\\FichierRejet\\RejetECH*.txt")
+    private Resource[] inputResources;
+*/
 
-
+    private Resource outputResource = new FileSystemResource("C:\\Users\\acer\\Desktop\\pfe\\fichier donnees\\FichierRejet\\RejetECH.csv");
 
 
     //Finally, LinesWriter will have the responsibility of writing ... to an output file:
     public class linesWriter implements Tasklet {
+        private DataSource dataSource;
+
         @Override
         public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
             return null;
         }
         // ...
-        /*
 
-=>to BD
+//=>to BD
          @Bean
-  public JdbcBatchItemWriter<FichierECH> writer() {
+  public JdbcBatchItemWriter<FichierECH> writerToBD() {
     JdbcBatchItemWriter<FichierECH> itemWriter = new JdbcBatchItemWriter<FichierECH>();
-    itemWriter.setDataSource(dataSource());
-    itemWriter.setSql("INSERT INTO EMPLOYEE (ID, FIRSTNAME, LASTNAME) VALUES (:id, :firstName, :lastName)");
+    itemWriter.setDataSource(this.dataSource);
+    itemWriter.setSql("INSERT INTO IMPAYES_CDL (NATENG, TYPE, CPT, MONTANT_CREANCE, DATE_CREANCE, NO_DOSSIER, DATE_ECHEANCE, DATE_MISE_IMPAYE, DATE_REGLEMENT, MONTANT_AMORTISSEMENT, MONTANT_INTERET_NORMAL, TVA_INTERET, MONTANT_INTERET_RETARD, TVA_INTERET_RETARD, MONATANT_PENALITE_RETARD, TVA_PENALITE_RETARD, NUM_COMPTE_PAYEUR, CODE_CATEGORIE, NUM_DOSSIER_COMPLET, NUMERO_LIGNE, NUMERO_TIRAGE) VALUES (:NATENG,:TYPE,:CPT,:MONTANT_CREANCE,:DATE_CREANCE,:NO_DOSSIER,:DATE_ECHEANCE,:DATE_MISE_IMPAYE,:DATE_REGLEMENT,:MONTANT_AMORTISSEMENT,:MONTANT_INTERET_NORMAL,:TVA_INTERET,:MONTANT_INTERET_RETARD,:TVA_INTERET_RETARD,:MONATANT_PENALITE_RETARD,:TVA_PENALITE_RETARD,:NUM_COMPTE_PAYEUR,:CODE_CATEGORIE,:NUM_DOSSIER_COMPLET,:NUMERO_LIGNE,:NUMERO_TIRAGE)");
     itemWriter.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<FichierECH>());
+    itemWriter.afterPropertiesSet();
+
     return itemWriter;
-  }        writer.setResource(new FileSystemResource("C://data/batch/data.csv"));
-=>to file
+  }
+
+//=>to file
+
+    @SneakyThrows
     @Bean
-    public FlatFileItemWriter<Student> writer() {
-        FlatFileItemWriter<Student> writer = new FlatFileItemWriter<>();
-        writer.setResource(new FileSystemResource("C://data/batch/data.csv"));  reject.txt
+    public FlatFileItemWriter<FichierECH> writerToFile() {
+        FlatFileItemWriter<FichierECH> writer = new FlatFileItemWriter<>();
+        writer.setResource((WritableResource) outputResource);  //reject.txt
+        writer.setAppendAllowed(true);    //All job repetitions should "append" to same output file
         writer.setLineAggregator(getDelimitedLineAggregator());
+        writer.afterPropertiesSet();
         return writer;
     }
-     private DelimitedLineAggregator<Student> getDelimitedLineAggregator() {
-        BeanWrapperFieldExtractor<Student> beanWrapperFieldExtractor = new BeanWrapperFieldExtractor<Student>();
-        beanWrapperFieldExtractor.setNames(new String[]{"id", "rollNumber", "name"});
-
-        DelimitedLineAggregator<Student> aggregator = new DelimitedLineAggregator<Student>();
-        aggregator.setDelimiter(",");
+     private DelimitedLineAggregator<FichierECH> getDelimitedLineAggregator() {
+        BeanWrapperFieldExtractor<FichierECH> beanWrapperFieldExtractor = new BeanWrapperFieldExtractor<FichierECH>();
+        beanWrapperFieldExtractor.setNames(new String[]{"Age", "NATENG", "TYPE","CPT","MONTANT_CREANCE","DATE_CREANCE","NO_DOSSIER","DATE_ECHEANCE","DATE_MISE_IMPAYE","DATE_REGLEMENT","MONTANT_AMORTISSEMENT","MONTANT_INTERET_NORMAL","TVA_INTERET","MONTANT_INTERET_RETARD","TVA_INTERET_RETARD","MONATANT_PENALITE_RETARD","TVA_PENALITE_RETARD","NUM_COMPTE_PAYEUR","CODE_CATEGORIE","NUM_DOSSIER_COMPLET","NUMERO_LIGNE","NUMERO_TIRAGE" });
+        DelimitedLineAggregator<FichierECH> aggregator = new DelimitedLineAggregator<FichierECH>();
+        aggregator.setDelimiter("|");
         aggregator.setFieldExtractor(beanWrapperFieldExtractor);
         return aggregator;
-
     }
-         */
+
     }
 
 }
