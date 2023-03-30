@@ -6,8 +6,9 @@ import org.springframework.batch.item.file.transform.FieldSet;
 public class FichierECHFieldSetMapper implements FieldSetMapper<FichierECH> {
     public FichierECH mapFieldSet(FieldSet fieldSet) {
         FichierECH FichierECH = new FichierECH();
+        System.out.println("\nValider.FichierECHFieldSetMapper\n");
 
-        FichierECH.setTYPE(fieldSet.readString(0));//------
+        FichierECH.setAge(fieldSet.readString(0));//------
         FichierECH.setNATENG(fieldSet.readString(1));
         FichierECH.setTYPE(fieldSet.readString(2));
         FichierECH.setCPT(fieldSet.readString(3));

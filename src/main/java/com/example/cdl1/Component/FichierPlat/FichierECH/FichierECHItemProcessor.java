@@ -1,21 +1,27 @@
 package com.example.cdl1.Component.FichierPlat.FichierECH;
 
-import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECH;
 import com.example.cdl1.Component.FichierPlat.Rejet.RejetECH;
 import com.example.cdl1.Component.TableBD.IMPAYES_CDL;
 import com.example.cdl1.Component.TableBD.TYPE_DOSSIER;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 public class FichierECHItemProcessor implements ItemProcessor<FichierECH, FichierECH> {
+
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(FichierECHItemProcessor.class);
+
     @Override
     public FichierECH process(FichierECH fichierECH) throws Exception {
-
+        System.out.println("Hello.process.fichierECH");
         TYPE_DOSSIER type_dossier =new TYPE_DOSSIER();
         IMPAYES_CDL impayesCdl = new IMPAYES_CDL();
         RejetECH rejectech = new RejetECH() ;
 
         if (fichierECH.getNATENG()  == "ECH"){
             if (fichierECH.getTYPE() == type_dossier.getLIBELLE_COURT() ){
+                System.out.println("\nValider.FichierECHItemProcessor\n");
                 impayesCdl.setAge(fichierECH.getAge()) ;
                 impayesCdl.setNATENG(fichierECH.getNATENG()) ;
                 impayesCdl.setTYPE(fichierECH.getTYPE()) ;
@@ -44,6 +50,7 @@ public class FichierECHItemProcessor implements ItemProcessor<FichierECH, Fichie
         }
         //--rejectECH
         else {
+            System.out.println("\nNonValider.FichierECHItemProcessor\n");
             rejectech.setAge(fichierECH.getAge()) ;
             rejectech.setNATENG(fichierECH.getNATENG()) ;
             rejectech.setTYPE(fichierECH.getTYPE()) ;
@@ -69,6 +76,8 @@ public class FichierECHItemProcessor implements ItemProcessor<FichierECH, Fichie
             rejectech.setNUMERO_LIGNE(fichierECH.getNUMERO_LIGNE()) ;
             rejectech.setNUMERO_TIRAGE(fichierECH.getNUMERO_TIRAGE()) ;
         }
+        LOGGER.info("printing '{}' to output file", fichierECH);
+
         return fichierECH;
     }
 }

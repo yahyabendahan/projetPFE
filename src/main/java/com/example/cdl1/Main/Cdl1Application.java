@@ -1,4 +1,4 @@
-package com.example.cdl1.Main;
+/*package com.example.cdl1.Main;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,8 +7,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Cdl1Application {
 
     public static void main(String[] args) {
+        System.out.println("run.Cdl1Application1");
         SpringApplication.run(Cdl1Application.class, args);
+        System.out.println("run.Cdl1Application2");
     }
+
+}
+
+*/
+
 
     /*
       @Autowired
@@ -50,5 +57,3 @@ public class Cdl1Application {
       System.out.println("Exit Status : " + execution.getStatus());
    }
      */
-
-}
