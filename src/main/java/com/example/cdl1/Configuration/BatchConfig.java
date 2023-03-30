@@ -4,6 +4,7 @@ package com.example.cdl1.Configuration;
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECH;
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHFieldSetMapper;
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemProcessor;
+import com.example.cdl1.Component.TableBD.IMPAYES_CDL;
 import com.example.cdl1.Component.TableBD.TYPE_DOSSIER;
 import com.example.cdl1.Component.TableBD.TYPE_DOSSIERResultRowMapper;
 import com.example.cdl1.ItemReader;
@@ -160,8 +161,8 @@ public class BatchConfig {
 
     //=>to BD
          @Bean
-  public JdbcBatchItemWriter<FichierECH> writerToBD() {
-    JdbcBatchItemWriter<FichierECH> itemWriter = new JdbcBatchItemWriter<>();
+  public JdbcBatchItemWriter<IMPAYES_CDL> writerToBD() {
+    JdbcBatchItemWriter<IMPAYES_CDL> itemWriter = new JdbcBatchItemWriter<>();
     itemWriter.setDataSource(dataSource);
     itemWriter.setSql("INSERT INTO IMPAYES_CDL (NATENG, TYPE, CPT, MONTANT_CREANCE, DATE_CREANCE, NO_DOSSIER, DATE_ECHEANCE, DATE_MISE_IMPAYE, DATE_REGLEMENT, MONTANT_AMORTISSEMENT, MONTANT_INTERET_NORMAL, TVA_INTERET, MONTANT_INTERET_RETARD, TVA_INTERET_RETARD, MONATANT_PENALITE_RETARD, TVA_PENALITE_RETARD, NUM_COMPTE_PAYEUR, CODE_CATEGORIE, NUM_DOSSIER_COMPLET, NUMERO_LIGNE, NUMERO_TIRAGE)" +
             " VALUES (:NATENG,:TYPE,:CPT,:MONTANT_CREANCE,:DATE_CREANCE,:NO_DOSSIER,:DATE_ECHEANCE,:DATE_MISE_IMPAYE,:DATE_REGLEMENT,:MONTANT_AMORTISSEMENT,:MONTANT_INTERET_NORMAL,:TVA_INTERET,:MONTANT_INTERET_RETARD,:TVA_INTERET_RETARD,:MONATANT_PENALITE_RETARD,:TVA_PENALITE_RETARD,:NUM_COMPTE_PAYEUR,:CODE_CATEGORIE,:NUM_DOSSIER_COMPLET,:NUMERO_LIGNE,:NUMERO_TIRAGE)");
@@ -175,19 +176,19 @@ public class BatchConfig {
 
     @SneakyThrows
     @Bean
-    public FlatFileItemWriter<FichierECH> writerToFile() {
+    public FlatFileItemWriter<IMPAYES_CDL> writerToFile() {
         System.out.println("\nValider.FlatFileItemWriter\n");
-        FlatFileItemWriter<FichierECH> writer = new FlatFileItemWriter<>();
+        FlatFileItemWriter<IMPAYES_CDL> writer = new FlatFileItemWriter<>();
         writer.setResource((WritableResource) outputResource);  //reject.txt
         writer.setAppendAllowed(true);    //All job repetitions should "append" to same output file
         writer.setLineAggregator(getDelimitedLineAggregator());
         writer.afterPropertiesSet();
         return writer;
     }
-     private DelimitedLineAggregator<FichierECH> getDelimitedLineAggregator() {
-        BeanWrapperFieldExtractor<FichierECH> beanWrapperFieldExtractor = new BeanWrapperFieldExtractor<>();
+     private DelimitedLineAggregator<IMPAYES_CDL> getDelimitedLineAggregator() {
+        BeanWrapperFieldExtractor<IMPAYES_CDL> beanWrapperFieldExtractor = new BeanWrapperFieldExtractor<>();
         beanWrapperFieldExtractor.setNames(new String[]{"Age", "NATENG", "TYPE","CPT","MONTANT_CREANCE","DATE_CREANCE","NO_DOSSIER","DATE_ECHEANCE","DATE_MISE_IMPAYE","DATE_REGLEMENT","MONTANT_AMORTISSEMENT","MONTANT_INTERET_NORMAL","TVA_INTERET","MONTANT_INTERET_RETARD","TVA_INTERET_RETARD","MONATANT_PENALITE_RETARD","TVA_PENALITE_RETARD","NUM_COMPTE_PAYEUR","CODE_CATEGORIE","NUM_DOSSIER_COMPLET","NUMERO_LIGNE","NUMERO_TIRAGE" });
-        DelimitedLineAggregator<FichierECH> aggregator = new DelimitedLineAggregator<>();
+        DelimitedLineAggregator<IMPAYES_CDL> aggregator = new DelimitedLineAggregator<>();
         aggregator.setDelimiter("|");
         aggregator.setFieldExtractor(beanWrapperFieldExtractor);
         return aggregator;
