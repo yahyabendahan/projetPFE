@@ -11,7 +11,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.FileSystemResource;
 
 public class FichierECHItemReader implements ItemReader<FichierECH> {
-
+void afficher(){
+    System.out.println("\nValider.FichierECHItemReader\n");
+}
     @Bean
     public FlatFileItemReader<FichierECH> flatFileItemReader()  throws Exception {
         FlatFileItemReader<FichierECH> itemReader = new FlatFileItemReader<>();

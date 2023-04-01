@@ -21,6 +21,8 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
@@ -60,12 +62,19 @@ public class BatchConfig {
     @Bean
     public MeterRegistry meterRegistry() {
         return new SimpleMeterRegistry();
-    }
-    @Autowired
-    private DataSource dataSource;
+    } //not doing its work
+
+   // private final DataSource dataSource;
+
+    @Bean
+    @ConfigurationProperties("spring.datasource")
+    public DataSource dataSource() {
+        return DataSourceBuilder.create().build();
+    } //not doing its work
+
     @Bean
     public PlatformTransactionManager transactionManager() {
-        return new DataSourceTransactionManager(dataSource);
+        return new DataSourceTransactionManager(dataSource());
     }
 
 
@@ -79,7 +88,7 @@ public class BatchConfig {
     @Bean
     protected JobRepository createJobRepository() throws Exception {
         JobRepositoryFactoryBean factory  = new JobRepositoryFactoryBean();
-        factory.setDataSource(dataSource);
+        factory.setDataSource(dataSource());
         factory.setTransactionManager(transactionManager());
         factory.setDatabaseType("ORACLE");
 
@@ -124,6 +133,10 @@ public class BatchConfig {
                  .build();
 
     }
+
+
+
+
 
 /*
     @Bean
@@ -188,10 +201,6 @@ public class BatchConfig {
             return TYPE_DOSSIER;
         }*/
 
-
-    public void afficher (){
-        System.out.println("\nafficheritem=>\n");
-    }
         @Bean
         public ItemReader reader(){
             System.out.println("\nValider.ItemReader\n");
