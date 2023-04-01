@@ -1,48 +1,39 @@
 package com.example.cdl1.Configuration;
 
-
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECH;
-import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHFieldSetMapper;
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemProcessor;
+import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemReader;
+import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemWriter;
 import com.example.cdl1.Component.TableBD.IMPAYES_CDL;
-import com.example.cdl1.Component.TableBD.TYPE_DOSSIER;
-import com.example.cdl1.Component.TableBD.TYPE_DOSSIERResultRowMapper;
-import com.example.cdl1.ItemReader;
-import jakarta.validation.constraints.NotNull;
-import lombok.SneakyThrows;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-
-import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.job.builder.SimpleJobBuilder;
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.core.step.builder.SimpleStepBuilder;
-import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.FlatFileItemWriter;
-import org.springframework.batch.item.file.mapping.DefaultLineMapper;
-import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
-import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
-import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.WritableResource;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
 
 @Configuration
 @SpringBootApplication
 @EnableBatchProcessing
+//@EnableTransactionManagement
 public class BatchConfig {
 
 
@@ -53,23 +44,65 @@ public class BatchConfig {
             System.out.println("run.Cdl1Application2");
         }
 
-    @Autowired(required = false)
-    private SimpleJobBuilder jobBuilders;
+    private JobBuilderFactory jobBuilders;
 
-    @Autowired(required = false)
-    private SimpleStepBuilder stepBuilders;
+    private StepBuilderFactory stepBuilders;
 
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(20);
+        return executor;
+    }
+    @Bean
+    public MeterRegistry meterRegistry() {
+        return new SimpleMeterRegistry();
+    }
     @Autowired
     private DataSource dataSource;
+    @Bean
+    public PlatformTransactionManager transactionManager() {
+        return new DataSourceTransactionManager(dataSource);
+    }
+
+
+   /* @Bean
+    public PlatformTransactionManager transactionManager() {
+        DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
+        transactionManager.setDataSource(dataSource());
+        return transactionManager;
+    }
+    */
+    @Bean
+    protected JobRepository createJobRepository() throws Exception {
+        JobRepositoryFactoryBean factory  = new JobRepositoryFactoryBean();
+        factory.setDataSource(dataSource);
+        factory.setTransactionManager(transactionManager());
+        factory.setDatabaseType("ORACLE");
+
+        factory.afterPropertiesSet();
+        return factory.getObject();
+    }
+   // jobRepositoryFactoryBean.setTransactionManager(transactionManager);
+
+
+
 
 
 
     	@Bean
 	public Job job() throws Exception {
-
-        return jobBuilders                //traitement des fichiers entrees
+            System.out.println("\nValider.Job\n");
+            jobBuilders =new JobBuilderFactory(createJobRepository());
+        return jobBuilders
+                .get("job")
+                //traitement des fichiers entrees
                 .incrementer(new RunIdIncrementer())
                 .start(StepECH())
+                //.next()
                 .build();
 	}
 
@@ -77,16 +110,19 @@ public class BatchConfig {
 
      @Bean
     public Step StepECH() throws Exception {
-        return stepBuilders
-                .reader(flatFileItemReader())
-                .reader(JdbcCursorItemReader())
-                .processor(processor())
-                .writer(writerToBD())
-                .writer(writerToFile())
-                .faultTolerant()
-                .retryLimit(3)
-                .retry(Exception.class)
-                .build();
+         System.out.println("\nValider.Step\n");
+         stepBuilders =new StepBuilderFactory(createJobRepository());
+         return stepBuilders.get("StepECH")
+                 .<FichierECH,IMPAYES_CDL>chunk(10,transactionManager())
+                 .reader(reader()) //.reader(JdbcCursorItemReader())
+                 .processor(processor())
+                 .writer(writer()) //.writer(writerToFile())
+                // .faultTolerant()
+                // .retryLimit(3)
+                // .retry(Exception.class)
+                 .taskExecutor(taskExecutor())
+                 .build();
+
     }
 
 /*
@@ -117,8 +153,10 @@ public class BatchConfig {
 
 
     }
-*/
-      @Bean
+*/ //simplebuilder
+
+
+      /*@Bean
     public FlatFileItemReader<FichierECH> flatFileItemReader()  throws Exception {
           FlatFileItemReader<FichierECH> itemReader = new FlatFileItemReader<>();
           System.out.println("\nValider.FlatFileItemReader0\n");
@@ -131,12 +169,13 @@ public class BatchConfig {
           lineTokenizer.setNames("Age","NATENG","TYPE");
           lineTokenizer.setIncludedFields(new int[] { 0, 1, 2 });
           lineMapper.setLineTokenizer(lineTokenizer);
-          lineMapper.setFieldSetMapper(new FichierECHFieldSetMapper());
+          lineMapper.setFieldSetMapper(new FichierECHFieldSetMapper());    //lineMapper.setTargetType()
           itemReader.setLineMapper(lineMapper);
-          System.out.println("\nValider.FlatFileItemReader1\n");
+
           return itemReader;
-      }
-        @Bean
+      } */
+
+        /*@Bean
         public JdbcCursorItemReader<TYPE_DOSSIER> JdbcCursorItemReader() throws SQLException {
             System.out.println("\nValider.JdbcCursorItemReader1\n");
 
@@ -147,14 +186,29 @@ public class BatchConfig {
             System.out.println("\nValider.JdbcCursorItemReader2\n");
 
             return TYPE_DOSSIER;
-        }
+        }*/
 
+
+    public void afficher (){
+        System.out.println("\nafficheritem=>\n");
+    }
         @Bean
-        public FichierECHItemProcessor processor()  {
+        public ItemReader reader(){
+            System.out.println("\nValider.ItemReader\n");
+            return new FichierECHItemReader();
+        }
+        @Bean
+        public ItemProcessor/*<? super FichierECH, ? extends IMPAYES_CDL>*/ processor(){
+            System.out.println("\nValider.ItemProcessor\n");
             return new FichierECHItemProcessor();
         }
+        @Bean
+        public ItemWriter writer(){
+            System.out.println("\nValider.ItemWriter\n");
+            return new FichierECHItemWriter();
+        }
 
-
+/*
     //Finally, LinesWriter will have the responsibility of writing ... to an output file:
     private Resource outputResource = new FileSystemResource("C:\\Users\\acer\\Desktop\\pfe\\fichier donnees\\FichierRejet\\RejetECH.CSV");
 
@@ -193,7 +247,7 @@ public class BatchConfig {
         aggregator.setFieldExtractor(beanWrapperFieldExtractor);
         return aggregator;
     }
-
+ */
 
 
 }
