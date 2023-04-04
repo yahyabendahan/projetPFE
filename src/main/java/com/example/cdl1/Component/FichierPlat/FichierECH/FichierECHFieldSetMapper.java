@@ -1,4 +1,4 @@
-package com.example.cdl1.Component.FichierPlat.FichierECH;
+/*package com.example.cdl1.Component.FichierPlat.FichierECH;
 
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.FieldSet;
@@ -36,3 +36,4 @@ public class FichierECHFieldSetMapper implements FieldSetMapper<FichierECH> {
         return FichierECH;
     }
 }
+*/

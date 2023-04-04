@@ -3,40 +3,40 @@ package com.example.cdl1.Component.FichierPlat.FichierECH;
 import com.example.cdl1.Component.FichierPlat.Rejet.RejetECH;
 import com.example.cdl1.Component.TableBD.IMPAYES_CDL;
 import com.example.cdl1.Component.TableBD.TYPE_DOSSIER;
-import com.example.cdl1.Component.TableBD.TYPE_DOSSIERResultRowMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.sql.DataSource;
+import java.sql.ResultSet;
 import java.util.Objects;
 
 public class FichierECHItemProcessor implements ItemProcessor<FichierECH, IMPAYES_CDL> {
 
+    ResultSet  rs;
+    int i;
     private static final Logger LOGGER =
             LoggerFactory.getLogger(FichierECHItemProcessor.class);
-
+    //@Bean
     @Override @Nullable
     public IMPAYES_CDL process(@NonNull FichierECH fichierECH) throws Exception {
 
-        JdbcCursorItemReader<TYPE_DOSSIER> TYPE_DOSSIER = new JdbcCursorItemReader<>();
-        DataSource dataSource = null;
-        TYPE_DOSSIER.setDataSource(dataSource);
-        TYPE_DOSSIER.setSql("select LIBELLE_COURT from TYPE_DOSSIER");
-        TYPE_DOSSIER.setRowMapper(new TYPE_DOSSIERResultRowMapper());
-        System.out.println("\nValider.JdbcCursorItemReader\n");
 
-        System.out.println("Hello.process.fichierECH");
+
+        System.out.println("Hello.process.FichierECHItemProcessor");
         TYPE_DOSSIER type_dossier =new TYPE_DOSSIER();
         IMPAYES_CDL impayesCdl = new IMPAYES_CDL();
         RejetECH rejectech = new RejetECH() ;
 
         if (Objects.equals(fichierECH.getNATENG(), "ECH")){ //fichierECH.getNATENG()  == "ECH"
             if (Objects.equals(fichierECH.getTYPE(), type_dossier.getLIBELLE_COURT())){ //fichierECH.getTYPE() == type_dossier.getLIBELLE_COURT()
-                System.out.println("\nValider.FichierECHItemProcessor\n");
+                System.out.println("\nValider.2-Condition-Verifier\n");
                 impayesCdl.setAge(fichierECH.getAge()) ;
                 impayesCdl.setNATENG(fichierECH.getNATENG()) ;
                 impayesCdl.setTYPE(fichierECH.getTYPE()) ;
@@ -63,10 +63,11 @@ public class FichierECHItemProcessor implements ItemProcessor<FichierECH, IMPAYE
                 impayesCdl.setNUMERO_TIRAGE(fichierECH.getNUMERO_TIRAGE()) ;
                 LOGGER.info("Created ImpayesCDLModel: {}", impayesCdl);
             }
+            System.out.println("VERIFIER fichierECH.getNATENG()  == ECH {}");
         }
         //--rejectECH
         else {
-            System.out.println("\nNonValider.FichierECHItemProcessor(rejectECH)\n");
+            System.out.println("\nNonValider.(rejectECH)\n");
             rejectech.setAge(fichierECH.getAge()) ;
             rejectech.setNATENG(fichierECH.getNATENG()) ;
             rejectech.setTYPE(fichierECH.getTYPE()) ;

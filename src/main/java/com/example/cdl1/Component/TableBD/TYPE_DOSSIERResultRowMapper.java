@@ -1,4 +1,4 @@
-package com.example.cdl1.Component.TableBD;
+/*package com.example.cdl1.Component.TableBD;
 
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
@@ -20,3 +20,4 @@ public class TYPE_DOSSIERResultRowMapper implements RowMapper<TYPE_DOSSIER> {
         return TYPE_DOSSIER;
     }
 }
+*/

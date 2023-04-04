@@ -7,22 +7,21 @@ import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemWriter;
 import com.example.cdl1.Component.TableBD.IMPAYES_CDL;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
@@ -31,6 +30,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.Collection;
+import java.util.logging.Logger;
 
 @Configuration
 @SpringBootApplication
@@ -50,6 +55,72 @@ public class BatchConfig {
 
     private StepBuilderFactory stepBuilders;
 
+    FichierECHItemReader read=new FichierECHItemReader();
+    FichierECHItemProcessor proces = new FichierECHItemProcessor();
+    FichierECHItemWriter write = new FichierECHItemWriter();
+    FichierECH fichierech = new FichierECH();
+
+    JobRepository repo=new JobRepository() {
+        @Override
+        public boolean isJobInstanceExists(String jobName, JobParameters jobParameters) {
+            return false;
+        }
+
+        @Override
+        public JobInstance createJobInstance(String jobName, JobParameters jobParameters) {
+            return null;
+        }
+
+        @Override
+        public JobExecution createJobExecution(String jobName, JobParameters jobParameters) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+            return null;
+        }
+
+        @Override
+        public void update(JobExecution jobExecution) {
+
+        }
+
+        @Override
+        public void add(StepExecution stepExecution) {
+
+        }
+
+        @Override
+        public void addAll(Collection<StepExecution> stepExecutions) {
+
+        }
+
+        @Override
+        public void update(StepExecution stepExecution) {
+
+        }
+
+        @Override
+        public void updateExecutionContext(StepExecution stepExecution) {
+
+        }
+
+        @Override
+        public void updateExecutionContext(JobExecution jobExecution) {
+
+        }
+
+        @Override
+        public StepExecution getLastStepExecution(JobInstance jobInstance, String stepName) {
+            return null;
+        }
+
+        @Override
+        public long getStepExecutionCount(JobInstance jobInstance, String stepName) {
+            return 0;
+        }
+
+        @Override
+        public JobExecution getLastJobExecution(String jobName, JobParameters jobParameters) {
+            return null;
+        }
+    };
 
     @Bean
     public TaskExecutor taskExecutor() {
@@ -64,48 +135,87 @@ public class BatchConfig {
         return new SimpleMeterRegistry();
     } //not doing its work
 
-   // private final DataSource dataSource;
-
-    @Bean
+    /*@Bean
     @ConfigurationProperties("spring.datasource")
     public DataSource dataSource() {
         return DataSourceBuilder.create().build();
     } //not doing its work
+    */
 
-    @Bean
-    public PlatformTransactionManager transactionManager() {
-        return new DataSourceTransactionManager(dataSource());
-    }
+    public DataSource dataSource= new DataSource() {
+        @Override
+        public <T> T unwrap(Class<T> iface) throws SQLException {
+            return null;
+        }
 
+        @Override
+        public boolean isWrapperFor(Class<?> iface) throws SQLException {
+            return false;
+        }
 
+        @Override
+        public Connection getConnection() throws SQLException {
+            return null;
+        }
+
+        @Override
+        public Connection getConnection(String username, String password) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public PrintWriter getLogWriter() throws SQLException {
+            return null;
+        }
+
+        @Override
+        public void setLogWriter(PrintWriter out) throws SQLException {
+
+        }
+
+        @Override
+        public void setLoginTimeout(int seconds) throws SQLException {
+
+        }
+
+        @Override
+        public int getLoginTimeout() throws SQLException {
+            return 0;
+        }
+
+        @Override
+        public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            return null;
+        }
+    };// datasource
    /* @Bean
     public PlatformTransactionManager transactionManager() {
+        return new DataSourceTransactionManager(dataSource);
+    }*/
+
+     @Bean
+    public PlatformTransactionManager transactionManager() {
         DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
-        transactionManager.setDataSource(dataSource());
+        transactionManager.setDataSource(dataSource);
         return transactionManager;
     }
-    */
-    @Bean
+
+    /*@Bean
     protected JobRepository createJobRepository() throws Exception {
         JobRepositoryFactoryBean factory  = new JobRepositoryFactoryBean();
-        factory.setDataSource(dataSource());
+        factory.setDataSource(dataSource);
         factory.setTransactionManager(transactionManager());
         factory.setDatabaseType("ORACLE");
 
         factory.afterPropertiesSet();
         return factory.getObject();
-    }
-   // jobRepositoryFactoryBean.setTransactionManager(transactionManager);
-
-
-
-
-
+    }*/
+    // jobRepositoryFactoryBean.setTransactionManager(transactionManager);
 
     	@Bean
 	public Job job() throws Exception {
             System.out.println("\nValider.Job\n");
-            jobBuilders =new JobBuilderFactory(createJobRepository());
+            jobBuilders =new JobBuilderFactory(repo);
         return jobBuilders
                 .get("job")
                 //traitement des fichiers entrees
@@ -116,26 +226,22 @@ public class BatchConfig {
 	}
 
 
-
      @Bean
     public Step StepECH() throws Exception {
          System.out.println("\nValider.Step\n");
-         stepBuilders =new StepBuilderFactory(createJobRepository());
+         stepBuilders =new StepBuilderFactory(repo);//createJobRepository()
          return stepBuilders.get("StepECH")
-                 .<FichierECH,IMPAYES_CDL>chunk(10,transactionManager())
+                 .<FichierECH,IMPAYES_CDL>chunk(10)//,transactionManager()
                  .reader(reader()) //.reader(JdbcCursorItemReader())
                  .processor(processor())
                  .writer(writer()) //.writer(writerToFile())
+                 .transactionManager(transactionManager())
                 // .faultTolerant()
                 // .retryLimit(3)
                 // .retry(Exception.class)
-                 .taskExecutor(taskExecutor())
+                // .taskExecutor(taskExecutor())
                  .build();
-
     }
-
-
-
 
 
 /*
@@ -202,19 +308,23 @@ public class BatchConfig {
         }*/
 
         @Bean
-        public ItemReader reader(){
+        public ItemReader reader() throws Exception {
             System.out.println("\nValider.ItemReader\n");
-            return new FichierECHItemReader();
+            read.flatFileItemReader();
+            return  read;
         }
         @Bean
-        public ItemProcessor/*<? super FichierECH, ? extends IMPAYES_CDL>*/ processor(){
+        public ItemProcessor processor() throws Exception {
             System.out.println("\nValider.ItemProcessor\n");
-            return new FichierECHItemProcessor();
+            proces.process( fichierech);
+            return proces;
         }
         @Bean
         public ItemWriter writer(){
             System.out.println("\nValider.ItemWriter\n");
-            return new FichierECHItemWriter();
+            write.writerToBD(dataSource);
+            write.writerToFile();
+            return write;
         }
 
 /*
