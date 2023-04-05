@@ -7,33 +7,39 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 
 public class FichierECHItemReader implements ItemReader<FichierECH> {
 
     private static final Logger LOGGER =
             LoggerFactory.getLogger(FichierECHItemReader.class);
 
+    @Value("classpath:fichier donnees\\CDL_ECH.CSV")
+    Resource InputFile;
+
     @Bean
     public FlatFileItemReader<FichierECH> flatFileItemReader()  throws Exception {
         FlatFileItemReader<FichierECH> itemReader = new FlatFileItemReader<>();
-        System.out.println("\nValider.FlatFileItemReader0\n");
-        itemReader.setResource(new ClassPathResource("CDL_ECH.CSV"));
+        System.out.println("\nValider.FlatFileItemReader<FichierECH>\n");
+        itemReader.setResource(InputFile);
+        //itemReader.setResource(new ClassPathResource("CDL_ECH.CSV"));
         //itemReader.setResource(new FileSystemResource("C:\\Users\\acer\\Desktop\\pfe\\fichier donnees\\CDL_ECH.CSV"));
-        itemReader.setName("ECH-Reader");
+        itemReader.setName("CDL_ECH");
         LOGGER.info("itemReader setResource is set: {}", itemReader);
         DefaultLineMapper<FichierECH> lineMapper = new DefaultLineMapper<>();
         DelimitedLineTokenizer lineTokenizer=new DelimitedLineTokenizer();
         lineTokenizer.setDelimiter("|");
         lineTokenizer.setStrict(false);
 
-        lineTokenizer.setNames("Age", "NATENG", "TYPE","CPT","MONTANT_CREANCE","DATE_CREANCE",
-                "NO_DOSSIER","DATE_ECHEANCE","DATE_MISE_IMPAYE","DATE_REGLEMENT","MONTANT_AMORTISSEMENT",
-                "MONTANT_INTERET_NORMAL","TVA_INTERET","MONTANT_INTERET_RETARD","TVA_INTERET_RETARD",
-                "MONATANT_PENALITE_RETARD","TVA_PENALITE_RETARD","NUM_COMPTE_PAYEUR","CODE_CATEGORIE",
-                "NUM_DOSSIER_COMPLET","NUMERO_LIGNE","NUMERO_TIRAGE");
+        lineTokenizer.setNames("Age", "NATENG", "TYPE","CPT","RAISON_SOCIAL","MONTANT_CREANCE","DATE_CREANCE",
+                "ID_CLIENT","NO_DOSSIER","DATE_ECHEANCE","DATE_MISE_IMPAYE","DATE_REGLEMENT",
+                "MONTANT_AMORTISSEMENT", "MONTANT_INTERET_NORMAL","TVA_INTERET","MONTANT_INTERET_RETARD",
+                "TVA_INTERET_RETARD", "MONATANT_PENALITE_RETARD","TVA_PENALITE_RETARD","NUM_COMPTE_PAYEUR",
+                "CODE_CATEGORIE", "NUM_DOSSIER_COMPLET","NUMERO_LIGNE","NUMERO_TIRAGE");
         //lineTokenizer.setIncludedFields(new int[] { 0, 1, 2 });
         BeanWrapperFieldSetMapper<FichierECH> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
         fieldSetMapper.setTargetType(FichierECH.class);

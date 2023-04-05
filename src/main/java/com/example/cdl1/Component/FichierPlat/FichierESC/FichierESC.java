@@ -7,7 +7,7 @@ public class FichierESC {
     private String TYPE;
     private String CPT;
     private String RAISON_SOCIAL;  //non
-    private double MONTANT_CREANCE;
+    private float MONTANT_CREANCE;
     private String DATE_CREANCE;
     private String ID_CLIENT;  //non
     private String NO_DOSSIER;
@@ -18,7 +18,7 @@ public class FichierESC {
     private String Date_Remise;
     private String REFERNCE_LIAISON;
     private String CODE_REJET;
-    private double COMISSION;
+    private float COMISSION;
     private String Field17; //non
     private String Field18; //non
 

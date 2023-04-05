@@ -4,6 +4,10 @@ import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECH;
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemProcessor;
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemReader;
 import com.example.cdl1.Component.FichierPlat.FichierECH.FichierECHItemWriter;
+import com.example.cdl1.Component.FichierPlat.FichierSBF.FichierSBF;
+import com.example.cdl1.Component.FichierPlat.FichierSBF.FichierSBFItemProcessor;
+import com.example.cdl1.Component.FichierPlat.FichierSBF.FichierSBFItemReader;
+import com.example.cdl1.Component.FichierPlat.FichierSBF.FichierSBFItemWriter;
 import com.example.cdl1.Component.TableBD.IMPAYES_CDL;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -55,10 +59,15 @@ public class BatchConfig {
 
     private StepBuilderFactory stepBuilders;
 
-    FichierECHItemReader read=new FichierECHItemReader();
+    FichierECH fichierech = new FichierECH();
+    FichierECHItemReader echread=new FichierECHItemReader();
     FichierECHItemProcessor proces = new FichierECHItemProcessor();
     FichierECHItemWriter write = new FichierECHItemWriter();
-    FichierECH fichierech = new FichierECH();
+    FichierSBF fichiersbf = new FichierSBF();
+    FichierSBFItemReader sbfread =new FichierSBFItemReader();
+    FichierSBFItemProcessor sbfproces = new FichierSBFItemProcessor();
+    FichierSBFItemWriter sbfwriter = new FichierSBFItemWriter();
+
 
     JobRepository repo=new JobRepository() {
         @Override
@@ -216,32 +225,61 @@ public class BatchConfig {
 	public Job job() throws Exception {
             System.out.println("\nValider.Job\n");
             jobBuilders =new JobBuilderFactory(repo);
+            stepBuilders =new StepBuilderFactory(repo);//createJobRepository()
+
+            Step StepECH=stepBuilders.get("StepECH")
+                    .<FichierECH,IMPAYES_CDL>chunk(10)//,transactionManager()
+                    .reader(readerECH()) //.reader(JdbcCursorItemReader())
+                    .processor(processorECH())
+                    .writer(writerECH()) //.writer(writerToFile())
+                    .transactionManager(transactionManager())
+                    // .faultTolerant()// .retryLimit(3)// .retry(Exception.class)// .taskExecutor(taskExecutor())
+                    .build();
+
+            Step StepSBF=stepBuilders.get("StepSBF")
+                    .<FichierSBF,IMPAYES_CDL>chunk(10)//,transactionManager()
+                    .reader(readerSBF()) //.reader(JdbcCursorItemReader())
+                    .processor(processorSBF())
+                    .writer(writerSBF()) //.writer(writerToFile())
+                    .transactionManager(transactionManager())
+                    // .faultTolerant()// .retryLimit(3)// .retry(Exception.class)// .taskExecutor(taskExecutor())
+                    .build();
+
         return jobBuilders
                 .get("job")
                 //traitement des fichiers entrees
                 .incrementer(new RunIdIncrementer())
-                .start(StepECH())
-                //.next()
+                .start(StepECH)
+                .next(StepSBF)
                 .build();
 	}
 
 
-     @Bean
+    /* @Bean
     public Step StepECH() throws Exception {
-         System.out.println("\nValider.Step\n");
+         System.out.println("\nValider.StepECH\n");
          stepBuilders =new StepBuilderFactory(repo);//createJobRepository()
          return stepBuilders.get("StepECH")
                  .<FichierECH,IMPAYES_CDL>chunk(10)//,transactionManager()
-                 .reader(reader()) //.reader(JdbcCursorItemReader())
-                 .processor(processor())
-                 .writer(writer()) //.writer(writerToFile())
+                 .reader(readerECH()) //.reader(JdbcCursorItemReader())
+                 .processor(processorECH())
+                 .writer(writerECH()) //.writer(writerToFile())
                  .transactionManager(transactionManager())
-                // .faultTolerant()
-                // .retryLimit(3)
-                // .retry(Exception.class)
-                // .taskExecutor(taskExecutor())
+                // .faultTolerant()// .retryLimit(3)// .retry(Exception.class)// .taskExecutor(taskExecutor())
                  .build();
-    }
+    }*/ //stepech
+    /*@Bean
+    public Step StepSBF() throws Exception {
+        System.out.println("\nValider.StepSBF\n");
+        stepBuilders =new StepBuilderFactory(repo);//createJobRepository()
+        return stepBuilders.get("StepECH")
+                .<FichierECH,IMPAYES_CDL>chunk(10)//,transactionManager()
+                .reader(readerSBF()) //.reader(JdbcCursorItemReader())
+                .processor(processorSBF())
+                .writer(writerSBF()) //.writer(writerToFile())
+                .transactionManager(transactionManager())
+                // .faultTolerant()// .retryLimit(3)// .retry(Exception.class)// .taskExecutor(taskExecutor())
+                .build();*/ //stepsbf
 
 
 /*
@@ -308,28 +346,47 @@ public class BatchConfig {
         }*/
 
         @Bean
-        public ItemReader reader() throws Exception {
-            System.out.println("\nValider.ItemReader\n");
-            read.flatFileItemReader();
-            return  read;
+        public ItemReader readerECH() throws Exception {
+            System.out.println("\nValider.ItemReaderECH\n");
+            echread.flatFileItemReader();
+            return  echread;
         }
         @Bean
-        public ItemProcessor processor() throws Exception {
-            System.out.println("\nValider.ItemProcessor\n");
+        public ItemProcessor processorECH() throws Exception {
+            System.out.println("\nValider.ItemProcessorECH\n");
             proces.process( fichierech);
             return proces;
         }
         @Bean
-        public ItemWriter writer(){
-            System.out.println("\nValider.ItemWriter\n");
+        public ItemWriter writerECH(){
+            System.out.println("\nValider.ItemWriterECH\n");
             write.writerToBD(dataSource);
             write.writerToFile();
             return write;
         }
+          @Bean
+          public ItemReader readerSBF() throws Exception {
+              System.out.println("\nValider.ItemReaderSBF\n");
+              sbfread.flatFileItemReader();
+             return  sbfread;
+    }
+         @Bean
+         public ItemProcessor processorSBF() throws Exception {
+              System.out.println("\nValider.ItemProcessorSBF\n");
+              sbfproces.process(fichiersbf);
+              return sbfproces;
+    }
+    @Bean
+          public ItemWriter writerSBF(){
+             System.out.println("\nValider.ItemWriterSBF\n");
+             sbfwriter.writerToBD(dataSource);
+             sbfwriter.writerToFile();
+             return sbfwriter;
+    }
 
 /*
     //Finally, LinesWriter will have the responsibility of writing ... to an output file:
-    private Resource outputResource = new FileSystemResource("C:\\Users\\acer\\Desktop\\pfe\\fichier donnees\\FichierRejet\\RejetECH.CSV");
+    private Resource outputResource = new FileSystemResource("C:\\Users\\acer\\Desktop\\pfe\\fichier donnees\\FichierRejet\\CDL_ECH_FAILS.CSV");
 
 
     //=>to BD

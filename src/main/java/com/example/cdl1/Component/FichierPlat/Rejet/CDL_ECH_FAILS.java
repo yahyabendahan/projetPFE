@@ -11,7 +11,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 
-public class RejetECH {
+public class CDL_ECH_FAILS {
     //24 colonne
     private String Age;     //non
     private String NATENG;

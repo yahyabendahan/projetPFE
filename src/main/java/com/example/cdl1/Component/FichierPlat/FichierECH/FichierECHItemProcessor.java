@@ -1,19 +1,14 @@
 package com.example.cdl1.Component.FichierPlat.FichierECH;
 
-import com.example.cdl1.Component.FichierPlat.Rejet.RejetECH;
+import com.example.cdl1.Component.FichierPlat.Rejet.CDL_ECH_FAILS;
 import com.example.cdl1.Component.TableBD.IMPAYES_CDL;
 import com.example.cdl1.Component.TableBD.TYPE_DOSSIER;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
-import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.util.Objects;
 
@@ -29,10 +24,10 @@ public class FichierECHItemProcessor implements ItemProcessor<FichierECH, IMPAYE
 
 
 
-        System.out.println("Hello.process.FichierECHItemProcessor");
+        System.out.println("Hello.process.ItemProcessor<FichierECH, IMPAYES_CDL>");
         TYPE_DOSSIER type_dossier =new TYPE_DOSSIER();
         IMPAYES_CDL impayesCdl = new IMPAYES_CDL();
-        RejetECH rejectech = new RejetECH() ;
+        CDL_ECH_FAILS rejectech = new CDL_ECH_FAILS() ;
 
         if (Objects.equals(fichierECH.getNATENG(), "ECH")){ //fichierECH.getNATENG()  == "ECH"
             if (Objects.equals(fichierECH.getTYPE(), type_dossier.getLIBELLE_COURT())){ //fichierECH.getTYPE() == type_dossier.getLIBELLE_COURT()

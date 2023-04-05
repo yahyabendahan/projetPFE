@@ -1,4 +1,5 @@
-package com.example.cdl1.Component.FichierPlat.Rejet;
+package com.example.cdl1.Component.FichierPlat.FichierSBF;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,7 +12,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 @AllArgsConstructor
 @ToString
 @EntityScan
-public class CDL_SBF_FAILS {
+public class FichierSBF {
 
     private String Age;  //non
     private String NATENG;
@@ -177,4 +178,3 @@ public class CDL_SBF_FAILS {
         Field18 = field18;
     }
 }
-
